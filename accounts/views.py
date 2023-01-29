@@ -1,3 +1,5 @@
+from django.utils import timezone
+
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.decorators import action
@@ -8,7 +10,8 @@ from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 
-from accounts.serializers import UserSerializer, LoginSerializer, VerifyOtpSerializer, ProfileUpdateSerializer
+from accounts.serializers import UserSerializer, LoginSerializer, VerifyOtpSerializer, ProfileUpdateSerializer, UserContactsSerializer, UserContactSerializer
+from accounts.models import UserContact
 
 User = get_user_model()
 
@@ -52,9 +55,29 @@ class VerifyOtpApiView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.verify(serializer.validated_data)
         user = serializer.validated_data["user"]
+
+        UserContact.objects.filter(
+            country_code=user.country_code,
+            mobile_number=user.mobile_number
+        ).update(
+            username=user.username,
+            updated_at=timezone.now(),
+            active=True
+        )
+
         token, created = Token.objects.get_or_create(user=user)
         return Response({
             "token": token.key,
             "name": user.name,
             "username": user.username
         }, status=status.HTTP_200_OK)
+
+
+class AddNewContacts(APIView):
+    permission_classes = (IsAuthenticated, )
+
+    def post(self, request, *args, **kwargs):
+        serializer = UserContactsSerializer(data=request.data, context={'request': self.request})
+        serializer.is_valid(raise_exception=True)
+        new_contacts = serializer.save()
+        return Response(data=UserContactSerializer(new_contacts, many=True).data, status=status.HTTP_200_OK)

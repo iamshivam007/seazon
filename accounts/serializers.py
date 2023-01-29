@@ -1,3 +1,4 @@
+from django.utils import timezone
 import os
 import random
 import uuid
@@ -8,6 +9,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from twilio.rest import Client
+from accounts.models import UserContact
 
 
 User = get_user_model()
@@ -76,3 +78,46 @@ class VerifyOtpSerializer(serializers.Serializer):
         user.login_otp = ""
         user.save()
         return
+
+
+class UserContactSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UserContact
+        fields = ["name", "country_code", "mobile_number", "username"]
+
+
+class UserContactsSerializer(serializers.Serializer):
+    contacts = serializers.ListSerializer(child=UserContactSerializer())
+
+    class Meta:
+        fields = ["contacts"]
+
+    def validate(self, attrs):
+        if len(attrs) >= 100:
+            raise ValidationError("Please less less than 500 contacts")
+        return attrs
+
+    def save(self, **kwargs):
+        mobile_numbers = map(lambda x: x["mobile_number"], self.validated_data["contacts"])
+        existing_mobile_numbers = UserContact.objects.filter(
+            user=self.context["request"].user,
+            mobile_number__in=mobile_numbers
+        ).values_list("mobile_number", flat=True)
+
+        # Filter out existing number
+        new_data = list(filter(lambda x: x["mobile_number"] not in existing_mobile_numbers, self.validated_data["contacts"]))
+        mobile_number_username_map = dict(User.objects.filter(
+            mobile_number__in=map(lambda x: x["mobile_number"], new_data)
+        ).values_list("mobile_number", "username"))
+
+        new_contacts = list(map(lambda item: UserContact(
+            user=self.context["request"].user,
+            mobile_number=item["mobile_number"],
+            country_code=item["country_code"],
+            name=item["name"],
+            username=mobile_number_username_map.get(item["mobile_number"]),
+            active=bool(mobile_number_username_map.get(item["mobile_number"])),
+            updated_at=timezone.now()
+        ), new_data))
+        return UserContact.objects.bulk_create(new_contacts)
