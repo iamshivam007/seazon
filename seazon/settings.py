@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework.authtoken',
-    "accounts"
+    "apps.accounts"
 ]
 
 MIDDLEWARE = [
@@ -124,7 +124,6 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
     ),
 }
-
 
 
 # Local Data

@@ -1,7 +1,7 @@
 from django.urls import path
 from django.conf import settings
 
-from accounts import views as accounts_views
+from apps.accounts import views as accounts_views
 from rest_framework.routers import DefaultRouter, SimpleRouter
 
 if settings.DEBUG:

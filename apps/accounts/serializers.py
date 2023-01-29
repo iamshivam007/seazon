@@ -9,7 +9,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from twilio.rest import Client
-from accounts.models import UserContact
+from apps.accounts.models import UserContact
 
 
 User = get_user_model()

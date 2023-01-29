@@ -10,8 +10,8 @@ from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 
-from accounts.serializers import UserSerializer, LoginSerializer, VerifyOtpSerializer, ProfileUpdateSerializer, UserContactsSerializer, UserContactSerializer
-from accounts.models import UserContact
+from apps.accounts.serializers import UserSerializer, LoginSerializer, VerifyOtpSerializer, ProfileUpdateSerializer, UserContactsSerializer, UserContactSerializer
+from apps.accounts.models import UserContact
 
 User = get_user_model()
 
