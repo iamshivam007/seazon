@@ -27,6 +27,17 @@ class UserViewSet(RetrieveModelMixin, GenericViewSet):
         assert isinstance(self.request.user.id, int)
         return self.queryset
 
+    @action(detail=False, methods=["GET"])
+    def sync(self, request):
+        serializer = UserSerializer(
+            UserContact.objects.filter(updated_at__gte=self.request.user.last_sync),
+            context={"request": request},
+            many=True
+        )
+        self.request.user.last_sync = timezone.now()
+        self.request.user.save()
+        return Response(status=status.HTTP_200_OK, data=serializer.data)
+
     @action(detail=False, methods=["GET", "PUT"])
     def me(self, request):
         if request.method == "GET":
