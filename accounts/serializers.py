@@ -23,6 +23,12 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["username", "name", "country_code", "mobile_number"]
 
 
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["name"]
+
+
 class LoginSerializer(serializers.Serializer):
     country_code = serializers.CharField(max_length=5, validators=[RegexValidator("^(\+?\d{1,3}|\d{1,4})$")])
     mobile_number = serializers.CharField(max_length=10, validators=[RegexValidator("^\d{10}$")])

@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 
-from accounts.serializers import UserSerializer, LoginSerializer, VerifyOtpSerializer
+from accounts.serializers import UserSerializer, LoginSerializer, VerifyOtpSerializer, ProfileUpdateSerializer
 
 User = get_user_model()
 
@@ -24,10 +24,16 @@ class UserViewSet(RetrieveModelMixin, GenericViewSet):
         assert isinstance(self.request.user.id, int)
         return self.queryset
 
-    @action(detail=False)
+    @action(detail=False, methods=["GET", "PUT"])
     def me(self, request):
-        serializer = UserSerializer(request.user, context={"request": request})
-        return Response(status=status.HTTP_200_OK, data=serializer.data)
+        if request.method == "GET":
+            serializer = UserSerializer(request.user, context={"request": request})
+            return Response(status=status.HTTP_200_OK, data=serializer.data)
+        else:
+            serializer = ProfileUpdateSerializer(data=request.data, instance=self.request.user)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(status=status.HTTP_200_OK)
 
 
 class LoginApiView(APIView):
