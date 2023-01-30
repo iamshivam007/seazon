@@ -120,4 +120,5 @@ class UserContactsSerializer(serializers.Serializer):
             active=bool(mobile_number_username_map.get(item["mobile_number"])),
             updated_at=timezone.now()
         ), new_data))
-        return UserContact.objects.bulk_create(new_contacts)
+        UserContact.objects.bulk_create(new_contacts)
+        return list(filter(lambda item: item.username is not None, new_contacts))
