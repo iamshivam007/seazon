@@ -9,6 +9,7 @@ gunicorn==19.9.0
 idna==2.7
 sentry-sdk==0.7.10
 twilio==7.16.2
+python-dotenv
 # Django REST Framework
 djangorestframework==3.14.0  # https://github.com/encode/django-rest-framework
 django-cors-headers==3.13.0 # https://github.com/adamchainz/django-cors-headers
