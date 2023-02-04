@@ -26,7 +26,7 @@ class User(AbstractUser):
 
 class UserContact(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    username = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    username = models.CharField(max_length=255, null=True, blank=True)
     name = CharField(_("Name of User"), max_length=255)
     country_code = CharField(_("User Country Code"), blank=True, max_length=4)
     mobile_number = CharField(_("Mobile Number"), max_length=10)
@@ -35,3 +35,6 @@ class UserContact(models.Model):
 
     def __str__(self):
         return f"${self.user} | ${self.name} -> ${self.mobile_number}"
+
+    class Meta:
+        unique_together = ['user', 'username']
