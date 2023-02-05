@@ -122,7 +122,7 @@ LOGIN_URL = '/login/'
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.TokenAuthentication",
+        "apps.accounts.authentication.CustomTokenAuthentication",
     ),
 }
 
