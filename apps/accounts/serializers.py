@@ -47,7 +47,7 @@ class LoginSerializer(serializers.Serializer):
             body=f'Hi, Your otp for verification is ${random_otp}'
         )
         print(response)
-        user, _ = User.objects.get_or_create(defaults={"username": uuid.uuid4()}, **validated_data)
+        user, _ = User.objects.get_or_create(defaults={"username": uuid.uuid4(), "last_sync": timezone.now()}, **validated_data)
         user.login_otp = random_otp
         user.save()
         return
