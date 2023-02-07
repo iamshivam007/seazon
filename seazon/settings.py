@@ -136,7 +136,7 @@ local_data = locals()
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Database
-if os.environ.get('use_sentry') == 'True':
+if os.environ.get('SENTRY_DSN'):
     # Sentry settings
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
