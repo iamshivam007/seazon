@@ -146,7 +146,7 @@ if os.environ.get('SENTRY_DSN'):
         integrations=[DjangoIntegration()]
     )
 
-elif os.environ.get('use_heroku'):
+if os.environ.get('use_heroku'):
     import django_heroku
     django_heroku.settings(locals())
 elif os.environ.get('use_aws'):

@@ -41,12 +41,11 @@ class LoginSerializer(serializers.Serializer):
     def send_otp(self, validated_data):
         random_otp = random.randint(10000, 99999)
         client = Client(account_sid, auth_token)
-        response = client.messages.create(
+        client.messages.create(
             from_=os.environ.get('TWILIO_PHONE_NUMBER'),
             to=validated_data["country_code"] + validated_data["mobile_number"],
             body=f'Hi, Your otp for verification is ${random_otp}'
         )
-        print(response)
         user, _ = User.objects.get_or_create(defaults={"username": uuid.uuid4(), "last_sync": timezone.now()}, **validated_data)
         user.login_otp = random_otp
         user.save()
