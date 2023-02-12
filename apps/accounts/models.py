@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.db.models import CharField
@@ -38,3 +40,25 @@ class UserContact(models.Model):
 
     class Meta:
         unique_together = ['user', 'username']
+
+
+class ChatGroup(models.Model):
+    name = CharField(_("Name of the Group"), max_length=255)
+    unique_id = models.UUIDField(default=uuid.uuid1, unique=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"${self.name} | ${self.created_by}"
+
+
+class GroupMember(models.Model):
+    group = models.ForeignKey(ChatGroup, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    is_admin = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"${self.group} | ${self.user}"
+
+    class Meta:
+        unique_together = ['group', 'user']

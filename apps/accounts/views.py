@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.mixins import RetrieveModelMixin
+from rest_framework.mixins import RetrieveModelMixin, CreateModelMixin
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.views import APIView
@@ -11,7 +11,8 @@ from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 
 from apps.accounts.serializers import UserSerializer, LoginSerializer, VerifyOtpSerializer, ProfileUpdateSerializer, UserContactsSerializer, UserContactSerializer
-from apps.accounts.models import UserContact
+from apps.accounts.models import UserContact, ChatGroup, GroupMember
+from apps.accounts import serializers as accounts_serializers
 
 User = get_user_model()
 
@@ -50,6 +51,30 @@ class UserViewSet(RetrieveModelMixin, GenericViewSet):
             return Response(status=status.HTTP_200_OK)
 
 
+class ChatGroupViewSet(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
+    serializer_class = accounts_serializers.ChatGroupSerializer
+    queryset = ChatGroup.objects.all()
+    lookup_field = "unique_id"
+
+    permission_classes = (IsAuthenticated, )
+
+    def get_queryset(self, *args, **kwargs):
+        return self.queryset
+
+    @action(detail=True, methods=["POST"])
+    def join(self, request, *args, **kwargs):
+        data = dict(**request.data, group=self.get_object().id, user=request.user.id)
+        serializer = accounts_serializers.GroupMemberSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["POST"])
+    def exit(self, request, *args, **kwargs):
+        GroupMember.objects.filter(group=self.get_object(), user=request.user).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class LoginApiView(APIView):
 
     def post(self, request, *args, **kwargs):
@@ -80,7 +105,8 @@ class VerifyOtpApiView(APIView):
         return Response({
             "token": token.key,
             "name": user.name,
-            "username": user.username
+            "username": user.username,
+            "id": user.id
         }, status=status.HTTP_200_OK)
 
 

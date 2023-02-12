@@ -9,7 +9,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from twilio.rest import Client
-from apps.accounts.models import UserContact
+from apps.accounts.models import UserContact, GroupMember, ChatGroup
 
 
 User = get_user_model()
@@ -22,7 +22,7 @@ auth_token = os.environ.get('TWILIO_AUTH_TOKEN')
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["username", "name", "country_code", "mobile_number"]
+        fields = ["username", "name", "country_code", "mobile_number", "id"]
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
@@ -121,3 +121,32 @@ class UserContactsSerializer(serializers.Serializer):
         ), new_data))
         UserContact.objects.bulk_create(new_contacts)
         return list(filter(lambda item: item.username is not None, new_contacts))
+
+
+class ChatGroupSerializer(serializers.ModelSerializer):
+    users = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True, write_only=True)
+    created_by = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), default=serializers.CurrentUserDefault()
+    )
+    creator_mobile_number = serializers.CharField(source="created_by.mobile_number", read_only=True)
+
+    class Meta:
+        model = ChatGroup
+        fields = '__all__'
+
+    def create(self, validated_data):
+        users = validated_data.pop("users")
+        instance = super().create(validated_data)
+        group_members = [GroupMember(user=self.context["request"].user, group=instance, is_admin=True)]
+        for user in users:
+            group_members.append(GroupMember(
+                user=user, group=instance
+            ))
+        GroupMember.objects.bulk_create(group_members)
+        return instance
+
+
+class GroupMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GroupMember
+        fields = '__all__'

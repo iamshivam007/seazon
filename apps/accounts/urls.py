@@ -10,6 +10,7 @@ else:
     router = SimpleRouter()
 
 router.register("users", accounts_views.UserViewSet)
+router.register("groups", accounts_views.ChatGroupViewSet)
 
 urlpatterns = [
     # API base url
