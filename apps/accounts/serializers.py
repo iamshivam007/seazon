@@ -62,7 +62,6 @@ class VerifyOtpSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         user = User.objects.filter(
-            country_code=attrs["country_code"],
             mobile_number=attrs["mobile_number"]
         ).first()
         if not user:

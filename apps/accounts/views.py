@@ -96,7 +96,6 @@ class VerifyOtpApiView(APIView):
         user = serializer.validated_data["user"]
 
         UserContact.objects.filter(
-            country_code=user.country_code,
             mobile_number=user.mobile_number
         ).update(
             username=user.username,
