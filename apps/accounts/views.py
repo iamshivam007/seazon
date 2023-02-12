@@ -31,7 +31,7 @@ class UserViewSet(RetrieveModelMixin, GenericViewSet):
     @action(detail=False, methods=["GET"])
     def sync(self, request):
         serializer = UserSerializer(
-            UserContact.objects.filter(updated_at__gte=self.request.user.last_sync),
+            list(UserContact.objects.filter(updated_at__gte=self.request.user.last_sync)),
             context={"request": request},
             many=True
         )

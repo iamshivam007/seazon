@@ -93,8 +93,8 @@ class UserContactsSerializer(serializers.Serializer):
         fields = ["contacts"]
 
     def validate(self, attrs):
-        if len(attrs) >= 100:
-            raise ValidationError("Please less less than 500 contacts")
+        # if len(attrs) >= 100:
+        #     raise ValidationError("Please less less than 100 contacts")
         return attrs
 
     def save(self, **kwargs):
