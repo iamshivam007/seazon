@@ -47,6 +47,7 @@ class ChatGroup(models.Model):
     unique_id = models.UUIDField(default=uuid.uuid1, unique=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+    premium = models.BooleanField(default=False)
 
     def __str__(self):
         return f"${self.name} | ${self.created_by}"

@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.mixins import RetrieveModelMixin, CreateModelMixin
+from rest_framework.mixins import RetrieveModelMixin, CreateModelMixin, ListModelMixin
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.views import APIView
@@ -54,7 +54,7 @@ class UserViewSet(RetrieveModelMixin, GenericViewSet):
             return Response(status=status.HTTP_200_OK)
 
 
-class ChatGroupViewSet(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
+class ChatGroupViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin, GenericViewSet):
     serializer_class = accounts_serializers.ChatGroupSerializer
     queryset = ChatGroup.objects.all()
     lookup_field = "unique_id"
@@ -62,6 +62,10 @@ class ChatGroupViewSet(RetrieveModelMixin, CreateModelMixin, GenericViewSet):
     permission_classes = (IsAuthenticated, )
 
     def get_queryset(self, *args, **kwargs):
+        if self.request.query_params.get("premium") in [True, "true"]:
+            return self.queryset.filter(premium=True)
+        elif self.request.query_params.get("premium") in [False, "false"]:
+            return self.queryset.filter(premium=False)
         return self.queryset
 
     @action(detail=True, methods=["POST"])
