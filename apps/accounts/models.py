@@ -20,7 +20,7 @@ class User(AbstractUser):
     login_otp = CharField(_("Login OTP"), blank=True, max_length=10)
     first_name = None  # type: ignore
     last_name = None  # type: ignore
-    last_sync = models.DateTimeField()
+    last_sync = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"${self.name} -> ${self.mobile_number}"
