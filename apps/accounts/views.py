@@ -1,3 +1,5 @@
+import datetime
+
 from django.utils import timezone
 
 from django.contrib.auth import get_user_model
@@ -106,6 +108,8 @@ class VerifyOtpApiView(APIView):
             updated_at=timezone.now(),
             active=True
         )
+        user.last_sync = datetime.datetime(2022, 1, 1)
+        user.save()
 
         token, created = Token.objects.get_or_create(user=user)
         return Response({
