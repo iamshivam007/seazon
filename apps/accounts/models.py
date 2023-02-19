@@ -4,6 +4,11 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.db.models import CharField
 from django.utils.translation import gettext_lazy as _
+from django.utils.crypto import get_random_string
+
+
+def get_default_random_string(length=10):
+    return get_random_string(length)
 
 
 class User(AbstractUser):
@@ -28,7 +33,7 @@ class User(AbstractUser):
 
 class UserContact(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    username = models.CharField(max_length=255, null=True, blank=True)
+    username = models.CharField(max_length=10, null=True, blank=True)
     name = CharField(_("Name of User"), max_length=255)
     country_code = CharField(_("User Country Code"), blank=True, max_length=4)
     mobile_number = CharField(_("Mobile Number"), max_length=10)
@@ -44,7 +49,7 @@ class UserContact(models.Model):
 
 class ChatGroup(models.Model):
     name = CharField(_("Name of the Group"), max_length=255)
-    unique_id = models.UUIDField(default=uuid.uuid1, unique=True)
+    unique_id = models.CharField(max_length=10, unique=True, default=get_default_random_string)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     premium = models.BooleanField(default=False)

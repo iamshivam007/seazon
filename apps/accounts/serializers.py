@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-
+from django.utils.crypto import get_random_string
 from twilio.rest import Client
 from apps.accounts.models import UserContact, GroupMember, ChatGroup
 
@@ -46,7 +46,10 @@ class LoginSerializer(serializers.Serializer):
             to=validated_data["country_code"] + validated_data["mobile_number"],
             body=f'Hi, Your otp for verification is ${random_otp}'
         )
-        user, _ = User.objects.get_or_create(defaults={"username": uuid.uuid4(), "last_sync": timezone.now()}, **validated_data)
+        user, _ = User.objects.get_or_create(
+            defaults={"username": get_random_string(10), "last_sync": timezone.now()},
+            **validated_data
+        )
         user.login_otp = random_otp
         user.save()
         return
@@ -128,10 +131,21 @@ class ChatGroupSerializer(serializers.ModelSerializer):
         queryset=User.objects.all(), default=serializers.CurrentUserDefault()
     )
     creator_mobile_number = serializers.CharField(source="created_by.mobile_number", read_only=True)
+    users_detail = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatGroup
         fields = '__all__'
+
+    def get_users_detail(self, instance):
+        return list(map(
+            lambda group_member: {
+                'name': group_member.user.name,
+                'username': group_member.user.username,
+                'id': group_member.user.id
+            },
+            instance.groupmember_set.all()
+        ))
 
     def create(self, validated_data):
         users = validated_data.pop("users")

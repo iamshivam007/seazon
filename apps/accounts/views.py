@@ -64,11 +64,28 @@ class ChatGroupViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin, Gen
     permission_classes = (IsAuthenticated, )
 
     def get_queryset(self, *args, **kwargs):
+        queryset = self.queryset
         if self.request.query_params.get("premium") in [True, "true"]:
-            return self.queryset.filter(premium=True)
+            queryset = queryset.filter(premium=True)
         elif self.request.query_params.get("premium") in [False, "false"]:
-            return self.queryset.filter(premium=False)
-        return self.queryset
+            queryset = queryset.filter(premium=False)
+        return queryset.prefetch_related('groupmember_set__user')
+
+    @action(detail=False, methods=["GET"])
+    def mine(self, *args, **kwargs):
+        queryset = self.queryset.filter(
+            groupmember__user=self.request.user).distinct().prefetch_related('groupmember_set__user'
+        )
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["POST"])
+    def add_member(self, request, *args, **kwargs):
+        data = dict(**request.data, group=self.get_object().id, user=User.objects.get(username=request.data.get("username")).id)
+        serializer = accounts_serializers.GroupMemberSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["POST"])
     def join(self, request, *args, **kwargs):
