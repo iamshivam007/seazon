@@ -126,7 +126,7 @@ class UserContactsSerializer(serializers.Serializer):
 
 
 class ChatGroupSerializer(serializers.ModelSerializer):
-    users = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True, write_only=True)
+    users = serializers.ListField(child=serializers.CharField(), write_only=True)
     created_by = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), default=serializers.CurrentUserDefault()
     )
@@ -136,6 +136,14 @@ class ChatGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatGroup
         fields = '__all__'
+
+    def validate_users(self, values):
+        users = User.objects.filter(username__in=values)
+        usernames = users.values_list('username', flat=True)
+        invalid_usernames = set(values) - set(usernames)
+        if invalid_usernames:
+            raise ValidationError(f"Invalid usernames {invalid_usernames}")
+        return users
 
     def get_users_detail(self, instance):
         return list(map(
@@ -152,9 +160,10 @@ class ChatGroupSerializer(serializers.ModelSerializer):
         instance = super().create(validated_data)
         group_members = [GroupMember(user=self.context["request"].user, group=instance, is_admin=True)]
         for user in users:
-            group_members.append(GroupMember(
-                user=user, group=instance
-            ))
+            if user != self.context["request"].user:
+                group_members.append(GroupMember(
+                    user=user, group=instance
+                ))
         GroupMember.objects.bulk_create(group_members)
         return instance
 
