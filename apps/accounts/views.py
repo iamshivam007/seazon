@@ -125,7 +125,7 @@ class VerifyOtpApiView(APIView):
             updated_at=timezone.now(),
             active=True
         )
-        user.last_sync = datetime.datetime(2022, 1, 1)
+        user.last_sync = timezone.datetime(2022, 1, 1)
         user.save()
 
         token, created = Token.objects.get_or_create(user=user)
