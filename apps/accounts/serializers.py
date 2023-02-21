@@ -133,7 +133,7 @@ class UserContactsSerializer(serializers.Serializer):
 
 
 class ChatGroupSerializer(serializers.ModelSerializer):
-    users = serializers.ListField(child=serializers.CharField(), write_only=True)
+    users = serializers.ListField(child=serializers.CharField(), write_only=True, required=False)
     created_by = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), default=serializers.CurrentUserDefault()
     )
@@ -163,7 +163,7 @@ class ChatGroupSerializer(serializers.ModelSerializer):
         ))
 
     def create(self, validated_data):
-        users = validated_data.pop("users")
+        users = validated_data.pop("users", [])
         instance = super().create(validated_data)
         group_members = [GroupMember(user=self.context["request"].user, group=instance, is_admin=True)]
         for user in users:
