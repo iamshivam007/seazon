@@ -34,9 +34,10 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     country_code = serializers.CharField(max_length=5, validators=[RegexValidator("^(\+?\d{1,3}|\d{1,4})$")])
     mobile_number = serializers.CharField(max_length=10, validators=[RegexValidator("^\d{10}$")])
+    name = serializers.CharField(max_length=255, allow_null=True, allow_blank=True, required=False)
 
     class Meta:
-        fields = ["country_code", "mobile_number"]
+        fields = ["country_code", "mobile_number", "name"]
 
     def send_otp(self, validated_data):
         random_otp = random.randint(10000, 99999)
@@ -46,8 +47,9 @@ class LoginSerializer(serializers.Serializer):
             to=validated_data["country_code"] + validated_data["mobile_number"],
             body=f'Hi, Your otp for verification is ${random_otp}'
         )
+        name = validated_data.pop("name", "")
         user, _ = User.objects.get_or_create(
-            defaults={"username": get_random_string(10), "last_sync": timezone.now()},
+            defaults={"username": get_random_string(10), "last_sync": timezone.now(), "name": name},
             **validated_data
         )
         user.login_otp = random_otp
