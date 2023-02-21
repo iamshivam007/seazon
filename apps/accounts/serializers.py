@@ -102,14 +102,19 @@ class UserContactsSerializer(serializers.Serializer):
         return attrs
 
     def save(self, **kwargs):
-        mobile_numbers = map(lambda x: x["mobile_number"], self.validated_data["contacts"])
+        mobile_numbers = set(map(lambda x: x["mobile_number"], self.validated_data["contacts"]))
         existing_mobile_numbers = UserContact.objects.filter(
             user=self.context["request"].user,
             mobile_number__in=mobile_numbers
         ).values_list("mobile_number", flat=True)
 
         # Filter out existing number
-        new_data = list(filter(lambda x: x["mobile_number"] not in existing_mobile_numbers, self.validated_data["contacts"]))
+        new_data = []
+        new_mobile_number_set = set()
+        for data in self.validated_data["contacts"]:
+            if data["mobile_number"] not in existing_mobile_numbers and data["mobile_number"] not in new_mobile_number_set:
+                new_data.append(data)
+                new_mobile_number_set.add(data["mobile_number"])
         mobile_number_username_map = dict(User.objects.filter(
             mobile_number__in=map(lambda x: x["mobile_number"], new_data)
         ).values_list("mobile_number", "username"))
