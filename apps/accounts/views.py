@@ -81,7 +81,7 @@ class ChatGroupViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin, Gen
 
     @action(detail=True, methods=["POST"])
     def add_member(self, request, *args, **kwargs):
-        data = dict(**request.data, group=self.get_object().id, user=User.objects.get(username=request.data.get("username")).id)
+        data = dict(group=self.get_object().id, user=User.objects.get(username=request.data.get("username")).id)
         serializer = accounts_serializers.GroupMemberSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -93,11 +93,14 @@ class ChatGroupViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin, Gen
         if type(usernames) is not list:
             return Response(data={'error': 'usernames should be a list'}, status=status.HTTP_400_BAD_REQUEST)
         serializers = []
+        group_id = self.get_object().id
+        already_added_users = set(GroupMember.objects.filter(group_id=group_id).values_list('user__username', flat=True))
+        usernames = set(usernames) - already_added_users
         for username in usernames:
             user = User.objects.filter(username=username).only('id').first()
             if not user:
                 return Response(data={'error': f'Invalid username {username}'}, status=status.HTTP_400_BAD_REQUEST)
-            data = dict(**request.data, group=self.get_object().id, user=user.id)
+            data = dict(group=group_id, user=user.id)
             serializer = accounts_serializers.GroupMemberSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializers.append(serializer)
