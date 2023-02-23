@@ -132,6 +132,13 @@ class UserContactsSerializer(serializers.Serializer):
         return list(filter(lambda item: item.username is not None, new_contacts))
 
 
+class ChatGroupUpdateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ChatGroup
+        fields = ('name', 'amount')
+
+
 class ChatGroupSerializer(serializers.ModelSerializer):
     users = serializers.ListField(child=serializers.CharField(), write_only=True, required=False)
     created_by = serializers.PrimaryKeyRelatedField(

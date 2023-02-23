@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.mixins import RetrieveModelMixin, CreateModelMixin, ListModelMixin
+from rest_framework.mixins import RetrieveModelMixin, CreateModelMixin, ListModelMixin, UpdateModelMixin
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.views import APIView
@@ -56,8 +56,9 @@ class UserViewSet(RetrieveModelMixin, GenericViewSet):
             return Response(status=status.HTTP_200_OK)
 
 
-class ChatGroupViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin, GenericViewSet):
+class ChatGroupViewSet(UpdateModelMixin, ListModelMixin, RetrieveModelMixin, CreateModelMixin, GenericViewSet):
     serializer_class = accounts_serializers.ChatGroupSerializer
+    update_serializer_class = accounts_serializers.ChatGroupUpdateSerializer
     queryset = ChatGroup.objects.all()
     lookup_field = "unique_id"
 
@@ -71,6 +72,20 @@ class ChatGroupViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin, Gen
             queryset = queryset.filter(premium=False)
         return queryset.prefetch_related('groupmember_set__user')
 
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.update_serializer_class(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
+
     @action(detail=False, methods=["GET"])
     def mine(self, *args, **kwargs):
         queryset = self.queryset.filter(
@@ -81,7 +96,13 @@ class ChatGroupViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin, Gen
 
     @action(detail=True, methods=["POST"])
     def add_member(self, request, *args, **kwargs):
-        data = dict(group=self.get_object().id, user=User.objects.get(username=request.data.get("username")).id)
+        group = self.get_object()
+        if group.premium and request.user.id != group.created_by.id:
+            return Response(
+                data={'error': 'Only admin can add member in premium group'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        data = dict(group=group.id, user=User.objects.get(username=request.data.get("username")).id)
         serializer = accounts_serializers.GroupMemberSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -89,11 +110,18 @@ class ChatGroupViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin, Gen
 
     @action(detail=True, methods=["POST"])
     def add_members(self, request, *args, **kwargs):
+        group = self.get_object()
+        if group.premium and request.user.id != group.created_by.id:
+            return Response(
+                data={'error': 'Only admin can add member in premium group'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         usernames = request.data.get("usernames")
         if type(usernames) is not list:
             return Response(data={'error': 'usernames should be a list'}, status=status.HTTP_400_BAD_REQUEST)
         serializers = []
-        group_id = self.get_object().id
+        group_id = group.id
         already_added_users = set(GroupMember.objects.filter(group_id=group_id).values_list('user__username', flat=True))
         usernames = set(usernames) - already_added_users
         for username in usernames:
