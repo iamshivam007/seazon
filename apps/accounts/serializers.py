@@ -1,7 +1,6 @@
 from django.utils import timezone
 import os
 import random
-import uuid
 
 from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
@@ -10,6 +9,7 @@ from rest_framework.exceptions import ValidationError
 from django.utils.crypto import get_random_string
 from twilio.rest import Client
 from apps.accounts.models import UserContact, GroupMember, ChatGroup
+from apps.accounts.utils import Base64ImageField
 
 
 User = get_user_model()
@@ -22,13 +22,15 @@ auth_token = os.environ.get('TWILIO_AUTH_TOKEN')
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["username", "name", "country_code", "mobile_number", "id", "status", "bio"]
+        fields = ["username", "name", "country_code", "mobile_number", "id", "status", "bio", "image"]
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
+    image = Base64ImageField(required=False)
+
     class Meta:
         model = User
-        fields = ["name", "status", "bio"]
+        fields = ["name", "status", "bio", "image"]
 
 
 class LoginSerializer(serializers.Serializer):

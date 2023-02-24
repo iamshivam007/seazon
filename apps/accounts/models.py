@@ -26,6 +26,7 @@ class User(AbstractUser):
     last_sync = models.DateTimeField(auto_now_add=True)
     status = models.TextField(blank=True)
     bio = models.TextField(blank=True)
+    image = models.ImageField(blank=True, upload_to='user/profile_photo/')
 
     def __str__(self):
         return f"${self.name} -> ${self.mobile_number}"
