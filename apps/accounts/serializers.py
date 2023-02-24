@@ -22,13 +22,13 @@ auth_token = os.environ.get('TWILIO_AUTH_TOKEN')
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["username", "name", "country_code", "mobile_number", "id"]
+        fields = ["username", "name", "country_code", "mobile_number", "id", "status", "bio"]
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["name"]
+        fields = ["name", "status", "bio"]
 
 
 class LoginSerializer(serializers.Serializer):

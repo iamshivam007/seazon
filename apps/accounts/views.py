@@ -50,7 +50,7 @@ class UserViewSet(RetrieveModelMixin, GenericViewSet):
             serializer = UserSerializer(request.user, context={"request": request})
             return Response(status=status.HTTP_200_OK, data=serializer.data)
         else:
-            serializer = ProfileUpdateSerializer(data=request.data, instance=self.request.user)
+            serializer = ProfileUpdateSerializer(data=request.data, instance=self.request.user, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(status=status.HTTP_200_OK)
